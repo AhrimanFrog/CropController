@@ -56,7 +56,6 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
 @property (nonatomic, strong, readwrite) UIView *foregroundContainerView;
 @property (nonatomic, strong) UIImageView *foregroundImageView;     /* A copy of the background image view, placed over the dimming views */
 @property (nonatomic, strong) TOCropScrollView *scrollView;         /* The scroll view in charge of panning/zooming the image. */
-@property (nonatomic, strong) UIView *overlayView;                  /* A semi-transparent grey view, overlaid on top of the background image */
 @property (nonatomic, strong) UIView *translucencyView;             /* A blur view that is made visible when the user isn't interacting with the crop view */
 @property (nonatomic, strong) id translucencyEffect;                /* The dark blur visual effect applied to the visual effect view. */
 @property (nonatomic, strong, readwrite) TOCropOverlayView *gridOverlayView;   /* A grid view overlaid on top of the foreground image view's container. */
@@ -136,7 +135,11 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     
     //View properties
     self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-    self.backgroundColor = TOCROPVIEW_BACKGROUND_COLOR;
+    if (@available(iOS 13.0, *)) {
+        self.backgroundColor = [UIColor systemGray5Color];
+    } else {
+        self.backgroundColor = TOCROPVIEW_BACKGROUND_COLOR;
+    }
     self.cropBoxFrame = CGRectZero;
     self.applyInitialCroppedImageFrame = NO;
     self.editing = NO;
@@ -179,14 +182,6 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     self.backgroundContainerView = [[UIView alloc] initWithFrame:self.backgroundImageView.frame];
     [self.backgroundContainerView addSubview:self.backgroundImageView];
     [self.scrollView addSubview:self.backgroundContainerView];
-    
-    //Grey transparent overlay view
-    self.overlayView = [[UIView alloc] initWithFrame:self.bounds];
-    self.overlayView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.overlayView.backgroundColor = [self.backgroundColor colorWithAlphaComponent:0.35f];
-    self.overlayView.hidden = NO;
-    self.overlayView.userInteractionEnabled = NO;
-    [self addSubview:self.overlayView];
     
     //Translucency View
     if (NSClassFromString(@"UIVisualEffectView")) {
@@ -1254,7 +1249,6 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     [self.gridOverlayView setGridHidden:hidden animated:animated];
     
     if (resetCropbox) {
-        [self moveCroppedContentToCenterAnimated:animated];
         [self captureStateForImageRotation];
         self.cropBoxLastEditedAngle = self.angle;
     }
@@ -1491,7 +1485,6 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
             self.scrollView.zoomScale = self.scrollView.minimumZoomScale;
         }
             
-        [self moveCroppedContentToCenterAnimated:NO];
         [self checkForCanReset];
     };
     
@@ -1605,7 +1598,6 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     
     //assign the new crop box frame and re-adjust the content to fill it
     self.cropBoxFrame = newCropFrame;
-    [self moveCroppedContentToCenterAnimated:NO];
     newCropFrame = self.cropBoxFrame;
     
     //work out how to line up out point of interest into the middle of the crop box
