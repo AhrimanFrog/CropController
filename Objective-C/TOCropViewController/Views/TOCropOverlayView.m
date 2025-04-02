@@ -63,6 +63,8 @@ static const CGFloat kTOCropOverLayerCornerWidth = 20.0f;
     _topRightLineViews  = @[newLineView(), newLineView()];
     _bottomRightLineViews = @[newLineView(), newLineView()];
     
+    self.backgroundColor = [UIColor systemBackgroundColor];
+    self.alpha = 0.25;
     self.displayHorizontalGridLines = YES;
     self.displayVerticalGridLines = YES;
 }
@@ -223,7 +225,7 @@ static const CGFloat kTOCropOverLayerCornerWidth = 20.0f;
 
 - (nonnull UIView *)createNewLineView {
     UIView *newLine = [[UIView alloc] initWithFrame:CGRectZero];
-    newLine.backgroundColor = [UIColor whiteColor];
+    newLine.backgroundColor = [UIColor labelColor];
     [self addSubview:newLine];
     return newLine;
 }
