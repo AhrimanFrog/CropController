@@ -189,19 +189,6 @@ The minimum croping aspect ratio. If set, user is prevented from setting croppin
  */
 @property (nonatomic, assign) BOOL translucencyAlwaysHidden;
 
-///*
-// if YES it will always show grid
-// if NO it will never show grid
-// NOTE : Do not use this method if you want to keep grid hide/show animation
-// */
-//- (void)setAlwaysShowGrid:(BOOL)showGrid;
-//
-///*
-// if YES it will disable translucency effect
-// */
-//- (void)setTranslucencyOff:(BOOL)disableTranslucency;
-
-
 /**
  Create a default instance of the crop view with the supplied image
  */

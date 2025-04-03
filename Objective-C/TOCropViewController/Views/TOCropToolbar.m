@@ -26,8 +26,6 @@
 
 @interface TOCropToolbar()
 
-@property (nonatomic, strong) UIView *backgroundView;
-
 @property (nonatomic, strong, readwrite) UIButton *doneTextButton;
 @property (nonatomic, strong, readwrite) UIButton *doneIconButton;
 
@@ -53,9 +51,6 @@
 }
 
 - (void)setup {
-    self.backgroundView = [[UIView alloc] initWithFrame:self.bounds];
-    self.backgroundView.backgroundColor = [UIColor colorWithWhite:0.12f alpha:1.0f];
-    [self addSubview:self.backgroundView];
     
     // On iOS 9, we can use the new layout features to determine whether we're in an 'Arabic' style language mode
     if (@available(iOS 9.0, *)) {
@@ -69,14 +64,17 @@
     NSBundle *resourceBundle = TO_CROP_VIEW_RESOURCE_BUNDLE_FOR_OBJECT(self);
     
     _doneTextButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    _doneTextButton.backgroundColor = [UIColor colorWithRed:0.261 green:0.044 blue:0.879 alpha:1];
+    _doneTextButton.layer.cornerRadius = 5;
     [_doneTextButton setTitle: _doneTextButtonTitle ?
         _doneTextButtonTitle : NSLocalizedStringFromTableInBundle(@"Done",
 																  @"TOCropViewControllerLocalizable",
 																  resourceBundle,
                                                                   nil)
                      forState:UIControlStateNormal];
-    [_doneTextButton setTitleColor:[UIColor colorWithRed:1.0f green:0.8f blue:0.0f alpha:1.0f] forState:UIControlStateNormal];
     if (@available(iOS 13.0, *)) {
+        _doneTextButton.tintColor = [UIColor whiteColor];
+        [_doneTextButton setImage:[UIImage systemImageNamed:@"checkmark"] forState:UIControlStateNormal];
         [_doneTextButton.titleLabel setFont:[UIFont systemFontOfSize:17.0f weight:UIFontWeightMedium]];
     } else {
         [_doneTextButton.titleLabel setFont:[UIFont systemFontOfSize:17.0f]];
@@ -87,15 +85,18 @@
     
     _doneIconButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [_doneIconButton setImage:[TOCropToolbar doneImage] forState:UIControlStateNormal];
-    [_doneIconButton setTintColor:[UIColor colorWithRed:1.0f green:0.8f blue:0.0f alpha:1.0f]];
     [_doneIconButton addTarget:self action:@selector(buttonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:_doneIconButton];
 
-    // Set the default color for the done buttons
-    self.doneButtonColor = nil;
+    [self setDoneButtonColor: [UIColor whiteColor]];
 
     _cancelTextButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    
+    _cancelTextButton.layer.cornerRadius = 5;
+    _cancelTextButton.layer.borderWidth = 1;
+    _cancelTextButton.layer.borderColor = [[UIColor colorWithRed:0.261 green:0.044 blue:0.879 alpha:1] CGColor];
+    if (@available(iOS 13.0, *)) {
+        _cancelTextButton.layer.backgroundColor = [[UIColor systemBackgroundColor] CGColor];
+    }
     [_cancelTextButton setTitle: _cancelTextButtonTitle ?
         _cancelTextButtonTitle : NSLocalizedStringFromTableInBundle(@"Cancel",
 																	@"TOCropViewControllerLocalizable",
@@ -112,26 +113,33 @@
     [_cancelIconButton addTarget:self action:@selector(buttonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:_cancelIconButton];
     
+    [self setCancelButtonColor:[UIColor colorWithRed:0.261 green:0.044 blue:0.879 alpha:1]];
+    
     _clampButton = [UIButton buttonWithType:UIButtonTypeSystem];
     _clampButton.contentMode = UIViewContentModeCenter;
     _clampButton.tintColor = [UIColor whiteColor];
     [_clampButton setImage:[TOCropToolbar clampImage] forState:UIControlStateNormal];
     [_clampButton addTarget:self action:@selector(buttonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:_clampButton];
+    [self setClampButtonHidden:YES];
     
     _rotateCounterclockwiseButton = [UIButton buttonWithType:UIButtonTypeSystem];
     _rotateCounterclockwiseButton.contentMode = UIViewContentModeCenter;
     _rotateCounterclockwiseButton.tintColor = [UIColor whiteColor];
+    _rotateCounterclockwiseButton.hidden = YES;
     [_rotateCounterclockwiseButton setImage:[TOCropToolbar rotateCCWImage] forState:UIControlStateNormal];
     [_rotateCounterclockwiseButton addTarget:self action:@selector(buttonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:_rotateCounterclockwiseButton];
+    [self setRotateCounterClockwiseButtonHidden:YES];
     
     _rotateClockwiseButton = [UIButton buttonWithType:UIButtonTypeSystem];
     _rotateClockwiseButton.contentMode = UIViewContentModeCenter;
     _rotateClockwiseButton.tintColor = [UIColor whiteColor];
+    _rotateClockwiseButton.hidden = YES;
     [_rotateClockwiseButton setImage:[TOCropToolbar rotateCWImage] forState:UIControlStateNormal];
     [_rotateClockwiseButton addTarget:self action:@selector(buttonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:_rotateClockwiseButton];
+    [self setRotateClockwiseButtonHidden:YES];
     
     _resetButton = [UIButton buttonWithType:UIButtonTypeSystem];
     _resetButton.contentMode = UIViewContentModeCenter;
@@ -144,6 +152,7 @@
                                                                          resourceBundle,
                                                                          nil);
     [self addSubview:_resetButton];
+    [self setResetButtonHidden:YES];
 }
 
 - (void)layoutSubviews
@@ -165,7 +174,6 @@
     frame.origin.y -= self.backgroundViewOutsets.top;
     frame.size.height += self.backgroundViewOutsets.top;
     frame.size.height += self.backgroundViewOutsets.bottom;
-    self.backgroundView.frame = frame;
     
 #if TOCROPTOOLBAR_DEBUG_SHOWING_BUTTONS_CONTAINER_RECT
     static UIView *containerView = nil;
@@ -178,12 +186,12 @@
 #endif
     
     if (verticalLayout == NO) {
-        CGFloat insetPadding = 10.0f;
+        CGFloat insetPadding = 20.0f;
         
         // Work out the cancel button frame
         CGRect frame = CGRectZero;
         frame.size.height = 44.0f;
-        frame.size.width = _showOnlyIcons ? 44.0f : MIN(self.frame.size.width / 3.0, self.cancelTextButton.frame.size.width);
+        frame.size.width = _showOnlyIcons ? 44.0f : MAX(self.frame.size.width / 3.0, self.cancelTextButton.frame.size.width);
 
         //If normal layout, place on the left side, else place on the right
         if (self.reverseContentLayout == NO) {
@@ -195,7 +203,7 @@
         (_showOnlyIcons ? self.cancelIconButton : self.cancelTextButton).frame = frame;
         
         // Work out the Done button frame
-        frame.size.width = _showOnlyIcons ? 44.0f : MIN(self.frame.size.width / 3.0, self.doneTextButton.frame.size.width);
+        frame.size.width = _showOnlyIcons ? 44.0f : MAX(self.frame.size.width / 3.0, self.doneTextButton.frame.size.width);
         
         if (self.reverseContentLayout == NO) {
             frame.origin.x = boundsSize.width - (frame.size.width + insetPadding);

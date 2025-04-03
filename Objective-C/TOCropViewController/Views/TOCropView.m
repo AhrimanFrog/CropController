@@ -195,7 +195,7 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
         self.translucencyView = toolbar;
         self.translucencyView.frame = CGRectInset(self.bounds, -1.0f, -1.0f);
     }
-    self.translucencyView.hidden = self.translucencyAlwaysHidden;
+    self.translucencyView.hidden = YES;
     self.translucencyView.userInteractionEnabled = NO;
     self.translucencyView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self addSubview:self.translucencyView];
@@ -1105,21 +1105,15 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     
     CGFloat alpha = hidden ? 0.0f : 1.0f;
     
-    if (animated == NO) {
-        self.backgroundImageView.alpha = alpha;
-        self.foregroundContainerView.alpha = alpha;
-        self.gridOverlayView.alpha = alpha;
-
-        [self toggleTranslucencyViewVisible:!hidden];
-        
-        return;
-    }
-    
     self.foregroundContainerView.alpha = alpha;
     self.backgroundImageView.alpha = alpha;
     
+    if (animated == NO) {
+        self.gridOverlayView.alpha = alpha;
+        return;
+    }
+    
     [UIView animateWithDuration:0.4f animations:^{
-        [self toggleTranslucencyViewVisible:!hidden];
         self.gridOverlayView.alpha = alpha;
     }];
 }
@@ -1254,20 +1248,14 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     }
     
     if (animated == NO) {
-        [self toggleTranslucencyViewVisible:!editing];
         return;
     }
     
-    CGFloat duration = editing ? 0.05f : 0.35f;
     CGFloat delay = editing? 0.0f : 0.35f;
     
     if (self.croppingStyle == TOCropViewCroppingStyleCircular) {
         delay = 0.0f;
     }
-    
-    [UIView animateKeyframesWithDuration:duration delay:delay options:0 animations:^{
-        [self toggleTranslucencyViewVisible:!editing];
-    } completion:nil];
 }
 
 - (void)moveCroppedContentToCenterAnimated:(BOOL)animated
@@ -1371,16 +1359,6 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     _simpleRenderMode = simpleMode;
     
     self.editing = NO;
-    
-    if (animated == NO) {
-        [self toggleTranslucencyViewVisible:!simpleMode];
-        
-        return;
-    }
-    
-    [UIView animateWithDuration:0.25f animations:^{
-        [self toggleTranslucencyViewVisible:!simpleMode];
-    }];
 }
 
 - (void)setAspectRatio:(CGSize)aspectRatio
